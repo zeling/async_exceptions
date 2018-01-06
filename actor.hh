@@ -1,6 +1,5 @@
 #pragma once
 
-#include <queue>
 #include <atomic>
 #include <assert.h>
 
@@ -24,9 +23,9 @@ public:
     }
     void act() {
         while(!_stop.load(std::memory_order_acquire)) {
-            if (!_q.empty()) {
-                respond_to(std::move(_q.front()));
-                _q.pop();
+            auto ret = _q.pop();
+            if (ret) {
+                respond_to(std::move(ret.value()));
             }
         }
     }

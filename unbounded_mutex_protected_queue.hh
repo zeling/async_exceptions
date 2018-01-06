@@ -2,17 +2,13 @@
 
 #include <mutex>
 #include "posix.hh"
+#include <experimental/optional>
 
 template <typename Elem>
 class unbounded_mutex_protected_queue {
     std::queue<Elem> _q;
     posix_mutex _m;
 public:
-    Elem &&front() {
-        std::lock_guard<posix_mutex> guard(_m);
-        return std::move(_q.front());
-    }
-
     void push(Elem elem) {
         std::lock_guard<posix_mutex> guard(_m);
         _q.push(elem);
@@ -24,14 +20,12 @@ public:
         _q.emplace(std::forward<Args>(args) ...);
     }
 
-    void pop() {
+    std::experimental::optional<Elem> pop() {
         std::lock_guard<posix_mutex> guard(_m);
+        if (_q.empty()) return {};
+        std::experimental::optional<Elem> ret(std::move(_q.front()));
         _q.pop();
-    }
-
-    bool empty() {
-        std::lock_guard<posix_mutex> guard(_m);
-        return _q.empty();
+        return ret;
     }
 };
 
